@@ -67,15 +67,42 @@ fn main() {
         let rate = rosrust::rate(10.0);
         loop {
             if let Some(robot_angle) = get_robot_angle() {
-                ros_info!("Robot angle: {robot_angle}");
+                // ros_info!("Robot angle: {robot_angle}");
                 if (angle_to_destination_point - robot_angle).abs() < 0.01 {
-                    cmd_vel_pub.send(geometry_msgs::Twist::default()).unwrap();
+                    cmd_vel_pub.send(Default::default()).unwrap();
                     ros_info!("Rotation completed. Current angle: {robot_angle}");
                     break;
                 }
             }
             rate.sleep();
         }
+    }
+
+    let pose = (*CURRENT_POSE.lock().unwrap()).clone();
+    if let Some(pose) = pose {
+        let distance =
+            ((x - pose.pose.position.x).powi(2) + (y - pose.pose.position.y).powi(2)).sqrt();
+        let velocity = 0.2;
+        let duration = rosrust::Duration::from_nanos((distance / velocity * 1e9) as i64);
+
+        ros_info!("Distance: {distance}");
+        ros_info!("Velocity: {velocity}");
+        ros_info!("Duration: {duration}");
+
+        cmd_vel_pub
+            .send(geometry_msgs::Twist {
+                linear: geometry_msgs::Vector3 {
+                    x: 0.2,
+                    y: 0.0,
+                    z: 0.0,
+                },
+                angular: Default::default(),
+            })
+            .unwrap();
+        rosrust::sleep(duration);
+        cmd_vel_pub.send(Default::default()).unwrap();
+
+        ros_info!("Destination point is reached");
     }
 }
 
