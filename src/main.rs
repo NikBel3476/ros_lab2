@@ -12,7 +12,7 @@ static CURRENT_POSE: Lazy<Mutex<Option<PoseWithCovariance>>> = Lazy::new(|| Mute
 fn main() {
     rosrust::init("lab2");
 
-    ros_info!("{:#?}", env::args());
+    // ros_info!("{:#?}", env::args());
     let x_arg = env::args().nth(1);
     let y_arg = env::args().nth(2);
     let (x, y): (f64, f64) = match (x_arg, y_arg) {
@@ -103,6 +103,11 @@ fn main() {
         cmd_vel_pub.send(Default::default()).unwrap();
 
         ros_info!("Destination point is reached");
+    }
+
+    let pose = (*CURRENT_POSE.lock().unwrap()).clone();
+    if let Some(pose) = pose {
+        ros_info!("Current robot position: {:#?}", pose.pose.position);
     }
 }
 
